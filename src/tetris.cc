@@ -255,7 +255,7 @@ Board startGame() {
 
 			for (auto &secondPieceBoard : allSecondPieceBoards) {
 				
-				double boardScore = meanScoreAllPieces(1, secondPieceBoard);
+				double boardScore = meanScoreAllPieces(0, secondPieceBoard);
 				if (boardScore > bestBoardScore) {
 					bestBoardScore = boardScore;
 					bestBoard = firstPieceBoard;
