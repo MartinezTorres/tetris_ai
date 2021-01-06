@@ -9,7 +9,10 @@
 
 using namespace std::chrono_literals;
 
-typedef std::array<uint32_t, 24> Board;
+struct Board : public std::array<uint32_t, 21> {
+	
+	int score=0, pieces=0, lines=0, lastMoveLines=0;
+};
 
 enum Piece { I,J,L,O,S,T,Z };
 

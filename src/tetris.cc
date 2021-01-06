@@ -9,9 +9,10 @@ void drawBoard(Board board) {
 		}
 		putchar('\n');
 	}
-	std::cout << "Score: " << board[21] << std::endl;
-	std::cout << "Pieces: " << board[22] << std::endl;
-	std::cout << "Lines: " << board[23] << std::endl;
+	std::cout << "Score: " << board.score << std::endl;
+	std::cout << "Pieces: " << board.pieces << std::endl;
+	std::cout << "Lines: " << board.lines << std::endl;
+	std::cout << "Avg Score / line: " << board.score/(board.lines+1e-10) << std::endl;
 }
 
 Board initBoard() {
@@ -120,13 +121,14 @@ std::vector<Board> findAllPossibleDestinations(Piece pieceIndex, const Board &bo
 					countLines++;
 				}
 			}
-			if (countLines==1) newBoard[21] += 40;
-			if (countLines==2) newBoard[21] += 100;
-			if (countLines==3) newBoard[21] += 300;
-			if (countLines==4) newBoard[21] += 1200;
+			if (countLines==1) newBoard.score += 40;
+			if (countLines==2) newBoard.score += 100;
+			if (countLines==3) newBoard.score += 300;
+			if (countLines==4) newBoard.score += 1200;
 			
-			newBoard[22]++;
-			newBoard[23]+=countLines;
+			newBoard.pieces++;
+			newBoard.lines+=countLines;
+			newBoard.lastMoveLines = countLines;
 			ret.push_back(newBoard);
 		}
 	}
@@ -134,8 +136,6 @@ std::vector<Board> findAllPossibleDestinations(Piece pieceIndex, const Board &bo
 	return ret;
 	
 }
-
-
 
 double scoreBoard(const Board &board) {
 
@@ -170,11 +170,30 @@ double scoreBoard(const Board &board) {
 		previousColumnHeight = columnHeight;
 	}
 	
-//	drawBoard(board);
-//	std::cerr << holes << std::endl;
-//	std::this_thread::sleep_for(1000ms);
+	// If we have holes, we enter recovery mode.
+	if (holes>0 or aggregateHeight>60) 
+		return -100 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 	
-	return -0.51*aggregateHeight - 0.76*board[23] -0.356*holes -0.18*bumpiness;
+	// We try to avoid making 1-3 lines.
+	if (board.lastMoveLines>0 and board.lastMoveLines<4) 
+		return -50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
+
+
+	bool haveWellLeft = true;
+	{
+		for (int j=0; j<20; j++) 
+			if ((board[j] & (1<<10))!=0)
+				haveWellLeft = false;
+	}
+
+	if (haveWellLeft)
+		return 20 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
+
+	if (board.lastMoveLines==4) 
+		return 50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
+
+	
+	return -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 }
 
 double meanScoreAllPieces(int depth, const Board &board) {
@@ -236,7 +255,7 @@ Board startGame() {
 
 			for (auto &secondPieceBoard : allSecondPieceBoards) {
 				
-				double boardScore = meanScoreAllPieces(0, secondPieceBoard);
+				double boardScore = meanScoreAllPieces(1, secondPieceBoard);
 				if (boardScore > bestBoardScore) {
 					bestBoardScore = boardScore;
 					bestBoard = firstPieceBoard;
