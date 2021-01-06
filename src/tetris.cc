@@ -128,7 +128,7 @@ std::vector<Board> findAllPossibleDestinations(Piece pieceIndex, const Board &bo
 			
 			newBoard.pieces++;
 			newBoard.lines+=countLines;
-			newBoard.lastMoveLines = countLines;
+			newBoard.lastMoveLines+=countLines;
 			ret.push_back(newBoard);
 		}
 	}
@@ -190,7 +190,7 @@ double scoreBoard(const Board &board) {
 		return -50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 
 	// We encourage making 4 lines.
-	if (board.lastMoveLines==4) 
+	if (board.lastMoveLines>=4) 
 		return 50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 
 	// We mildly encourage having a well to make 4 lines.
@@ -218,7 +218,7 @@ double meanScoreAllPieces(int depth, const Board &board) {
 			minScore = bestScore;
 	}
 	
-	if (minScore == 1e10) minScore = 0;
+	if (minScore == 1e10) minScore = -1e10;
 	
 	return minScore;
 }
@@ -248,6 +248,8 @@ Board startGame() {
 		
 		Piece piece = next;
 		next = getSample();
+		
+		board.lastMoveLines = 0;
 		
 		std::vector<Board> allFirstPieceBoards = findAllPossibleDestinations(piece, board);
 		
