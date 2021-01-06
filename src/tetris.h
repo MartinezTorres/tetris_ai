@@ -4,6 +4,10 @@
 #include <unordered_set>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono_literals;
 
 typedef std::array<uint32_t, 24> Board;
 

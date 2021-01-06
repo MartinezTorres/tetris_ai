@@ -147,8 +147,6 @@ double scoreBoard(const Board &board) {
 		aggregateHeight += 20 - j;
 	}
 	
-	//std::cerr << aggregateHeight << std::endl;
-	
 	double holes = 0;
 	for (int i=1; i<11; i++) {
 	
@@ -157,7 +155,7 @@ double scoreBoard(const Board &board) {
 
 		for (int k=j; k<21; k++)
 			if ((board[k] & (1<<i))==0)
-				holes+=k-j;
+				holes++;
 	}
 
 	double bumpiness = 0;
@@ -172,7 +170,11 @@ double scoreBoard(const Board &board) {
 		previousColumnHeight = columnHeight;
 	}
 	
-	return 100000. - 7*aggregateHeight - 10*holes - 5*bumpiness + 1*board[23];
+//	drawBoard(board);
+//	std::cerr << holes << std::endl;
+//	std::this_thread::sleep_for(1000ms);
+	
+	return -0.51*aggregateHeight - 0.76*board[23] -0.356*holes -0.18*bumpiness;
 }
 
 double meanScoreAllPieces(int depth, const Board &board) {
@@ -180,12 +182,10 @@ double meanScoreAllPieces(int depth, const Board &board) {
 	if (depth==0) return scoreBoard(board);
 	
 	double minScore = 1e10;
-	double sumScore = 0;
 	for (int i=0; i<7; i++) {
 		
-		
 		std::vector<Board> allPiecesBoards = findAllPossibleDestinations(Piece(i), board);
-		double bestScore = 0;
+		double bestScore = -1e10;
 		for (auto &allPiecesBoard : allPiecesBoards) {
 			double score = meanScoreAllPieces(depth-1, allPiecesBoard);
 			if (score>bestScore) 
@@ -193,14 +193,11 @@ double meanScoreAllPieces(int depth, const Board &board) {
 		}
 		if (bestScore < minScore)
 			minScore = bestScore;
-			
-		sumScore += bestScore;
 	}
 	
 	if (minScore == 1e10) minScore = 0;
 	
 	return minScore;
-	return sumScore;
 }
 
 static Piece getSample() {
@@ -231,11 +228,11 @@ Board startGame() {
 		
 		std::vector<Board> allFirstPieceBoards = findAllPossibleDestinations(piece, board);
 		
-		double bestBoardScore = -1;
+		double bestBoardScore = -1e10;
 		Board bestBoard;
 		for (auto &firstPieceBoard : allFirstPieceBoards) {
 			
-			std::vector<Board> allSecondPieceBoards = findAllPossibleDestinations(piece, firstPieceBoard);
+			std::vector<Board> allSecondPieceBoards = findAllPossibleDestinations(next, firstPieceBoard);
 
 			for (auto &secondPieceBoard : allSecondPieceBoards) {
 				
@@ -247,10 +244,11 @@ Board startGame() {
 			}
 		}
 		
-		if (bestBoardScore<0) return board;
+		if (bestBoardScore==-1e10) return board;
 		board = bestBoard;
 
 		drawBoard(board);
+		//std::this_thread::sleep_for(100ms);
 	}
 }
 
