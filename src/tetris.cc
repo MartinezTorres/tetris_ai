@@ -169,15 +169,6 @@ double scoreBoard(const Board &board) {
 		if (i>1) bumpiness += std::abs(columnHeight - previousColumnHeight);
 		previousColumnHeight = columnHeight;
 	}
-	
-	// If we have holes, we enter recovery mode.
-	if (holes>0 or aggregateHeight>60) 
-		return -100 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
-	
-	// We try to avoid making 1-3 lines.
-	if (board.lastMoveLines>0 and board.lastMoveLines<4) 
-		return -50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
-
 
 	bool haveWellLeft = true;
 	{
@@ -185,13 +176,26 @@ double scoreBoard(const Board &board) {
 			if ((board[j] & (1<<10))!=0)
 				haveWellLeft = false;
 	}
+	
+	// If we have high height, we enter recovery mode.
+	if (aggregateHeight>80) 
+		return -100 + -0.51*aggregateHeight - 1.76*board.lastMoveLines -0.356*holes -0.30*bumpiness;
 
-	if (haveWellLeft)
-		return 20 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
+	// If we have holes or mild height, we enter mild recovery mode.
+	if (holes>0 or aggregateHeight>60) 
+		return -100 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
+	
+	// Otherwise, we try to avoid making 1-3 lines.
+	if (board.lastMoveLines>0 and board.lastMoveLines<4) 
+		return -50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 
+	// We encourage making 4 lines.
 	if (board.lastMoveLines==4) 
 		return 50 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 
+	// We mildly encourage having a well to make 4 lines.
+	if (haveWellLeft)
+		return 20 + -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 	
 	return -0.51*aggregateHeight - 0.76*board.lastMoveLines -0.356*holes -0.18*bumpiness;
 }
